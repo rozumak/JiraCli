@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace JiraCli.Api
 {
@@ -47,10 +48,10 @@ namespace JiraCli.Api
             searchQuery += $"(worklogAuthor IN ({string.Join(",", _worklogAuthors)}))";
 
             if (_worklogStartDate != null)
-                searchQuery += $" AND worklogDate >= \"{_worklogStartDate.Value.ToString("yyyy/MM/dd")}\"";
+                searchQuery += $" AND worklogDate >= \"{_worklogStartDate.Value.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture)}\"";
 
             if (_worklogEndDate != null)
-                searchQuery += $" AND worklogDate <= \"{_worklogEndDate.Value.ToString("yyyy/MM/dd")}\"";
+                searchQuery += $" AND worklogDate <= \"{_worklogEndDate.Value.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture)}\"";
 
             return new ApiSearchRequest {Search = searchQuery, IncludedFields = _includedFields};
         }
