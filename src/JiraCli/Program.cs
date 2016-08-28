@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -6,7 +7,9 @@ using System.Threading.Tasks;
 using CommandLine;
 using CommandLine.Text;
 using JiraCli.Api;
+using JiraCli.Configuration;
 using JiraCli.ViewModels;
+using Microsoft.Extensions.Configuration;
 
 namespace JiraCli
 {
@@ -68,8 +71,14 @@ namespace JiraCli
 
     class Program
     {
+        private static AppConfiguration _configuration;
+
         private static int Main(string[] args)
         {
+            InitConfiguration();
+
+            //TODO: remove CommandLine dependency
+            //TODO: use url, login, password from settings and not from args
             var options = new Options();
             if (!Parser.Default.ParseArguments(args, options))
             {
@@ -91,6 +100,34 @@ namespace JiraCli
             }
 
             return 0;
+        }
+
+        private static void InitConfiguration()
+        {
+            ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+            configurationBuilder.AddPersistenJsonFile("appsettings.json", true);
+
+            var configRoot = configurationBuilder.Build();
+            _configuration = new AppConfiguration();
+            configRoot.Bind(_configuration);
+
+            if (_configuration.IsFirstRun)
+            {
+                var jiraConfigSection = configRoot.GetSection(nameof(_configuration.JiraSettings));
+                
+                Console.WriteLine("Jira CommandLine interface setup.");
+                Console.Write("Url: ");
+                jiraConfigSection[nameof(_configuration.JiraSettings.BaseUrl)] = Console.ReadLine();
+
+                Console.Write("Username: ");
+                jiraConfigSection[nameof(_configuration.JiraSettings.Login)] = Console.ReadLine();
+
+                Console.Write("Password: ");
+                jiraConfigSection[nameof(_configuration.JiraSettings.Password)] = Console.ReadLine();
+
+                //rebing configuration
+                configRoot.Bind(_configuration);
+            }
         }
 
         private static async Task<IEnumerable<ProjectViewModel>> DownloadUsersWorklogs(RestApiServiceClient client,
