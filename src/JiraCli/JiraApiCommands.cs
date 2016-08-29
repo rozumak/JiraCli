@@ -9,7 +9,8 @@ namespace JiraCli
 {
     public static class JiraApiCommands
     {
-        public static async Task<ProjectViewModel> DownloadTimesheetAsync(this RestApiServiceClient client, Period period,
+        public static async Task<ProjectViewModel> DownloadTimesheetAsync(this RestApiServiceClient client,
+            Period period,
             params string[] users)
         {
             var issuesRequest = BuildRequest(period, users);
@@ -26,15 +27,17 @@ namespace JiraCli
             foreach (var issue in issuesWithWorklogs)
             {
                 var issueViewModel = new IssueViewModel(issue);
-                issueViewModel.Worklogs = issue.worklogs.Select(w =>
-                {
-                    var worklogViewModel = new WorklogViewModel(w)
+                issueViewModel.Worklogs = issue.worklogs
+                    .Where(w => authorViewModel.Name.Equals(w.authorName, StringComparison.InvariantCultureIgnoreCase))
+                    .Select(w =>
                     {
-                        Issue = issueViewModel,
-                        Author = authorViewModel
-                    };
-                    return worklogViewModel;
-                }).ToList();
+                        var worklogViewModel = new WorklogViewModel(w)
+                        {
+                            Issue = issueViewModel,
+                            Author = authorViewModel
+                        };
+                        return worklogViewModel;
+                    }).ToList();
 
                 issuesViewModels.Add(issueViewModel);
             }
