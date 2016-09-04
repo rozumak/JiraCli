@@ -25,6 +25,8 @@ namespace JiraCli
         {
             HttpResponseMessage httpResponseMessage = await response.ConfigureAwait(false);
 
+            httpResponseMessage.EnsureSuccessStatusCode();
+
             var serializer = new JsonSerializer();
 
             using (Stream stream = await httpResponseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))

@@ -1,105 +1,88 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using CommandLine;
-using CommandLine.Text;
-using JiraCli.Api;
+using JiraCli.Commands;
 using JiraCli.Configuration;
-using JiraCli.ViewModels;
 using Microsoft.Extensions.Configuration;
 
 namespace JiraCli
 {
-    public class Options
-    {
-        [Option('c', "credentials", Required = true,
-            HelpText = "Jira login and password separated by colon. Example \"login:pass\".")]
-        public string JiraCredentials { get; set; }
-
-        [Option('j', "jiraurl", Required = true, HelpText = "Jira site url.")]
-        public string JiraUrl { get; set; }
-
-        [Option('u', "users", Required = false, HelpText = "Jira user names separated by comma.")]
-        public string Users { get; set; }
-
-        [Option('d', "days", DefaultValue = 15, Required = false, HelpText = "Period in days for logs download.")]
-        public int Days { get; set; }
-
-        [Option('p', "period", Required = false,
-            HelpText = "Period in time for logs download. Format yyyy/MM/dd-yyyy/MM/dd.")]
-        public string PeriodInfo { get; set; }
-
-        [Option('m', "month", DefaultValue = false, Required = false,
-            HelpText = "TODO")]
-        public bool PrevMonth { get; set; }
-
-        [ParserState]
-        public IParserState LastParserState { get; set; }
-
-        [HelpOption]
-        public string GetUsage()
-        {
-            return HelpText.AutoBuild(this,
-                current => HelpText.DefaultParsingErrorsHandler(this, current));
-        }
-
-        public IEnumerable<string> GetUsers()
-            => Users?.Split(new[] {","}, StringSplitOptions.RemoveEmptyEntries) ?? Enumerable.Empty<string>();
-
-        public string GetLogin() => JiraCredentials.Split(':')[0];
-
-        public string GetPassword() => JiraCredentials.Split(':')[1];
-
-        public Period GetPeriod()
-        {
-            if (!string.IsNullOrWhiteSpace(PeriodInfo))
-            {
-                return Period.FromString(PeriodInfo);
-            }
-
-            if (PrevMonth)
-            {
-                return Period.ForPrevMonth();
-            }
-
-            return Period.FromDays(Days);
-        }
-    }
-
     class Program
     {
-        private static AppConfiguration _configuration;
+        private static readonly Dictionary<string, Func<string[], int>> s_Commands =
+            new Dictionary<string, Func<string[], int>>
+            {
+                ["timesheet"] = TimesheetCommand.Run,
+            };
+
+        public static AppConfiguration Configuration { get; set; }
 
         private static int Main(string[] args)
         {
-            InitConfiguration();
-
-            //TODO: remove CommandLine dependency
-            //TODO: use url, login, password from settings and not from args
-            var options = new Options();
-            if (!Parser.Default.ParseArguments(args, options))
+            try
             {
-                return -1;
+                InitConfiguration();
+
+                for (int argIndex = 0; argIndex < args.Length; argIndex++)
+                {
+                    if (IsArg(args[argIndex], "h", "help"))
+                    {
+                        ShowHelp();
+                        return 0;
+                    }
+
+                    //override settings
+                    if (IsArg(args[argIndex], "user"))
+                    {
+                        Configuration.JiraSettings.Login = GetOptionArgValue(args, ++argIndex);
+                    }
+                    else if (IsArg(args[argIndex], "pass"))
+                    {
+                        Configuration.JiraSettings.Password = GetOptionArgValue(args, ++argIndex);
+                    }
+                    else if (IsArg(args[argIndex], "url"))
+                    {
+                        Configuration.JiraSettings.BaseUrl = GetOptionArgValue(args, ++argIndex);
+                    }
+
+                    else if (args[argIndex].StartsWith("-"))
+                    {
+                        Console.WriteLine($"Unknown option: {args[argIndex]}");
+                        return 1;
+                    }
+                    else
+                    {
+                        string runCommand = args[argIndex];
+                        var commandArgs = (argIndex + 1) >= args.Length
+                            ? Enumerable.Empty<string>().ToArray()
+                            : args.Skip(argIndex + 1).ToArray();
+
+                        Func<string[], int> commandAction;
+                        if (s_Commands.TryGetValue(runCommand, out commandAction))
+                        {
+                            try
+                            {
+                                int exitCode = commandAction(commandArgs);
+                                return exitCode;
+                            }
+                            catch (GracefulException)
+                            {
+                                return 0;
+                            }
+                        }
+
+                        Console.WriteLine($"Unknown command \"{runCommand}\"");
+                        return 1;
+                    }
+                }
+
+                return Program.Main(new[] {"--help"});
             }
-
-            Period period = options.GetPeriod();
-            Console.WriteLine("Downloading worklogs for period of {0}.", period);
-
-            var jiraClient = new RestApiServiceClient(new HttpClientHandler(), options.JiraUrl, options.GetLogin(), options.GetPassword());
-            var views = DownloadUsersWorklogs(jiraClient, options.GetUsers(), options.GetPeriod()).Result;
-
-            foreach (var view in views)
+            catch (ArgumentException argEx)
             {
-                Console.WriteLine("**** Logs for user \"{0}\".", view.Author.Name);
-                view.Print(new PlainTextOutput(Console.Out));
-                Console.WriteLine("******************************************************************");
-                Console.WriteLine();
+                Console.WriteLine(argEx.Message);
+                return 1;
             }
-
-            return 0;
         }
 
         private static void InitConfiguration()
@@ -108,34 +91,75 @@ namespace JiraCli
             configurationBuilder.AddPersistenJsonFile("appsettings.json", true);
 
             var configRoot = configurationBuilder.Build();
-            _configuration = new AppConfiguration();
-            configRoot.Bind(_configuration);
+            Configuration = new AppConfiguration();
+            configRoot.Bind(Configuration);
 
-            if (_configuration.IsFirstRun)
+            if (Configuration.IsFirstRun)
             {
-                var jiraConfigSection = configRoot.GetSection(nameof(_configuration.JiraSettings));
-                
+                var jiraConfigSection = configRoot.GetSection(nameof(Configuration.JiraSettings));
+
                 Console.WriteLine("Jira CommandLine interface setup.");
                 Console.Write("Url: ");
-                jiraConfigSection[nameof(_configuration.JiraSettings.BaseUrl)] = Console.ReadLine();
+                jiraConfigSection[nameof(JiraConfiguration.BaseUrl)] = Console.ReadLine();
 
                 Console.Write("Username: ");
-                jiraConfigSection[nameof(_configuration.JiraSettings.Login)] = Console.ReadLine();
+                jiraConfigSection[nameof(JiraConfiguration.Login)] = Console.ReadLine();
 
                 Console.Write("Password: ");
-                jiraConfigSection[nameof(_configuration.JiraSettings.Password)] = Console.ReadLine();
+                jiraConfigSection[nameof(JiraConfiguration.Password)] = Console.ReadLine();
 
                 //rebing configuration
-                configRoot.Bind(_configuration);
+                configRoot.Bind(Configuration);
             }
         }
 
-        private static async Task<IEnumerable<ProjectViewModel>> DownloadUsersWorklogs(RestApiServiceClient client,
-            IEnumerable<string> users, Period period)
+        private static void ShowHelp()
         {
-            //NOTE: downloading timesheets for users not in single search request but simultaneously to increase speed 
-            var downloadTasks = users.Select(user => client.DownloadTimesheetAsync(period, user)).ToList();
-            return await Task.WhenAll(downloadTasks);
+            const string usageText = @"Usage: jira [host-options] [command] [arguments] [common-options]
+
+Arguments:
+  [command]           The command to execute
+  [arguments]         Arguments to pass to the command
+  [host-options]      Options specific to jira (host)
+  [common-options]    Options common to all commands
+
+Common options:
+  -h|--help           Show help 
+
+Host options (passed before the command):
+  --url               Site url
+  --user              Site username
+  --pass              Site password
+
+Commands:
+  timesheet           Download timesheet report";
+
+            Console.WriteLine(usageText);
+        }
+
+        public static bool IsArg(string value, string longName)
+        {
+            return IsArg(value, null, longName);
+        }
+
+        public static bool IsArg(string value, string shortName, string longName)
+        {
+            return (shortName != null && value.Equals("-" + shortName)) ||
+                   (longName != null && value.Equals("--" + longName));
+        }
+
+        public static string GetOptionArgValue(string[] args, int index)
+        {
+            string errorMessage = $"Option value at {index} is mandatory.";
+            if (index + 1 > args.Length)
+                throw new ArgumentException(errorMessage);
+
+            string argValue = args[index];
+
+            if (argValue.StartsWith("-"))
+                throw new ArgumentException(errorMessage);
+
+            return argValue;
         }
     }
 }

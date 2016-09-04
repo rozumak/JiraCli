@@ -44,11 +44,11 @@ namespace JiraCli
             if (items.Length == 2)
             {
                 DateTime startDate;
-                if (!DateTime.TryParseExact(items[0], dateFormat, CultureInfo.InvariantCulture,
+                if (DateTime.TryParseExact(items[0], dateFormat, CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out startDate))
                 {
                     DateTime endDate;
-                    if (!DateTime.TryParseExact(items[1], dateFormat, CultureInfo.InvariantCulture,
+                    if (DateTime.TryParseExact(items[1], dateFormat, CultureInfo.InvariantCulture,
                         DateTimeStyles.None, out endDate))
                     {
                         return new Period(startDate, endDate);
@@ -56,7 +56,8 @@ namespace JiraCli
                 }
             }
 
-            throw new Exception("Got error while parsing.");
+            throw new ArgumentException(
+                $"Incorrect string format \"{period}\". Supported format \"yyyy/MM/dd-yyyy/MM/dd\"");
         }
 
         public static Period ForPrevMonth()
