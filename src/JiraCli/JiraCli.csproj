@@ -107,6 +107,7 @@
     <Compile Include="Commands\TimesheetCommand.cs" />
     <Compile Include="Configuration\AppConfiguration.cs" />
     <Compile Include="ConfigurationExtensions.cs" />
+    <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="GracefulException.cs" />
     <Compile Include="HttpClientEx.cs" />
     <Compile Include="ITextOutput.cs" />

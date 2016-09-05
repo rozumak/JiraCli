@@ -18,7 +18,9 @@ namespace JiraCli
             if (users.Length != 1)
                 throw new NotImplementedException();
 
-            //downloading all info
+            //NOTE: our jira search request return all issues that match our request,
+            //but this issues also may include worklogs that are not in requested period or for requested author
+            //worklogs must be filtered here to match user request
             var issuesWithWorklogs = await client.GetIssuesAsync(issuesRequest);
 
             //mapping models to view models
@@ -29,6 +31,7 @@ namespace JiraCli
                 var issueViewModel = new IssueViewModel(issue);
                 issueViewModel.Worklogs = issue.worklogs
                     .Where(w => authorViewModel.Name.Equals(w.authorName, StringComparison.InvariantCultureIgnoreCase))
+                    .Where(w => w.started.Date >= period.StartDate && w.started.Date <= period.EndDate)
                     .Select(w =>
                     {
                         var worklogViewModel = new WorklogViewModel(w)

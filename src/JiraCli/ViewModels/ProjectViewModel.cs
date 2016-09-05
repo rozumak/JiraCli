@@ -1,10 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using JiraCli.Extensions;
 
 namespace JiraCli.ViewModels
 {
     public class ProjectViewModel
     {
+        private const int WorkDayHours = 8;
+        private const int WorkingDaysInWeek = 5;
+
         private readonly Period _period;
 
         public List<IssueViewModel> Issues { get; }
@@ -14,6 +20,13 @@ namespace JiraCli.ViewModels
         public AuthorViewModel Author { get; }
 
         public double TotalHoursInPeriod => WorkingDays.Select(x => x.TotalHours).Sum();
+
+        public double ExpectedTotalHoursInPeriod
+            =>
+                WorkingDays.Count(
+                    d =>
+                        !d.Date.IsWeekendDay(WorkingDaysInWeek,
+                            CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek))*WorkDayHours;
 
         public ProjectViewModel(IEnumerable<IssueViewModel> issues, IEnumerable<WorkDayViewModel> workingDays,
             AuthorViewModel author, Period period)
@@ -54,7 +67,8 @@ namespace JiraCli.ViewModels
             }
 
             //TODO: move tostring into formatter it doesn't belongs here
-            table.AddFooterRow($"Total logged hours for period: {TotalHoursInPeriod.ToString("0.##")}");
+            table.AddFooterRow($"Total hours for period logged/expected: {TotalHoursInPeriod.ToString("0.##")}" +
+                               $"/{ExpectedTotalHoursInPeriod.ToString("0.##")}");
 
             tableFormatter.Write(table, output);
         }
