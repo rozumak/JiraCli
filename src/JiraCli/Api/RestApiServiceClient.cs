@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using JiraCli.Api.Models;
+using JiraCli.Extensions;
 
 namespace JiraCli.Api
 {

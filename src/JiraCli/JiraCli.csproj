@@ -104,14 +104,13 @@
     <Compile Include="Api\Models\WorklogResponse.cs" />
     <Compile Include="Api\RestApiServiceClient.cs" />
     <Compile Include="Api\SearchRequestBuilder.cs" />
-    <Compile Include="Commands\TimesheetCommand.cs" />
+    <Compile Include="Commands\Timesheet\TimesheetCommand.cs" />
     <Compile Include="Configuration\AppConfiguration.cs" />
-    <Compile Include="ConfigurationExtensions.cs" />
+    <Compile Include="Extensions\ConfigurationExtensions.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="GracefulException.cs" />
-    <Compile Include="HttpClientEx.cs" />
+    <Compile Include="Extensions\HttpClientEx.cs" />
     <Compile Include="ITextOutput.cs" />
-    <Compile Include="JiraApiCommands.cs" />
     <Compile Include="Period.cs" />
     <Compile Include="Configuration\PersistenJsonConfigurationProvider.cs" />
     <Compile Include="Configuration\PersistenJsonConfigurationSource.cs" />
@@ -128,6 +127,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Compile Include="Commands\Timesheet\TimesheetCommand.Cli.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace JiraCli
+namespace JiraCli.Extensions
 {
     public static class HttpClientEx
     {

@@ -2,7 +2,7 @@
 using JiraCli.Configuration;
 using Microsoft.Extensions.Configuration;
 
-namespace JiraCli
+namespace JiraCli.Extensions
 {
     public static class ConfigurationExtensions
     {

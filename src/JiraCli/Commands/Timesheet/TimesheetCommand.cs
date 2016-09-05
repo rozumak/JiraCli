@@ -1,15 +1,56 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using JiraCli.Api;
+using JiraCli.Configuration;
 using JiraCli.ViewModels;
 
-namespace JiraCli
+namespace JiraCli.Commands.Timesheet
 {
-    public static class JiraApiCommands
+    public partial class TimesheetCommand
     {
-        public static async Task<ProjectViewModel> DownloadTimesheetAsync(this RestApiServiceClient client,
+        public Period Period { get; set; }
+
+        public string[] Users { get; set; }
+
+        public void Run(JiraConfiguration settings, TextWriter output)
+        {
+            if (Period == null || Users == null)
+                throw new InvalidOperationException(
+                    $"{nameof(Period)} and {nameof(Users)} must be initialized before running command.");
+
+            if(Users.Length ==0)
+                throw new InvalidOperationException($"{nameof(Users)} must contain at least one user.");
+
+            output.WriteLine("Downloading worklogs for period of {0}.", Period);
+
+            var jiraClient = new RestApiServiceClient(new HttpClientHandler(), settings.BaseUrl,
+                settings.Login,
+                settings.Password);
+            var views = DownloadTimesheetAsync(jiraClient, Users, Period).Result;
+
+            output.WriteLine();
+            //printing into output
+            foreach (var view in views)
+            {
+                output.WriteLine("Worklogs for user \"{0}\":", view.Author.Name);
+                view.Print(new PlainTextOutput(output));
+                output.WriteLine();
+            }
+        }
+
+        private async Task<IEnumerable<ProjectViewModel>> DownloadTimesheetAsync(RestApiServiceClient client,
+            IEnumerable<string> users, Period period)
+        {
+            //NOTE: downloading timesheets for users not in single search request but simultaneously to increase speed 
+            var downloadTasks = users.Select(user => DownloadTimesheetImplAsync(client, period, user)).ToList();
+            return await Task.WhenAll(downloadTasks);
+        }
+
+        private async Task<ProjectViewModel> DownloadTimesheetImplAsync(RestApiServiceClient client,
             Period period,
             params string[] users)
         {
@@ -47,14 +88,14 @@ namespace JiraCli
 
             var workDayViewModels = issuesViewModels.SelectMany(issue => issue.Worklogs)
                 .GroupBy(w => w.StarteDate)
-                .Select(g => new WorkDayViewModel {Worklogs = g.ToList()})
+                .Select(g => new WorkDayViewModel { Worklogs = g.ToList() })
                 .ToList();
 
             var projectViewModel = new ProjectViewModel(issuesViewModels, workDayViewModels, authorViewModel, period);
             return projectViewModel;
         }
 
-        private static ApiSearchRequest BuildRequest(Period period, string[] users)
+        private ApiSearchRequest BuildRequest(Period period, string[] users)
         {
             var issuesRequestBuilder = new SearchRequestBuilder()
                 .WorklogStartAt(period.StartDate)

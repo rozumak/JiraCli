@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using JiraCli.Commands;
+using JiraCli.Commands.Timesheet;
 using JiraCli.Configuration;
+using JiraCli.Extensions;
 using Microsoft.Extensions.Configuration;
 
 namespace JiraCli
