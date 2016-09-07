@@ -104,6 +104,7 @@
     <Compile Include="Api\Models\WorklogResponse.cs" />
     <Compile Include="Api\RestApiServiceClient.cs" />
     <Compile Include="Api\SearchRequestBuilder.cs" />
+    <Compile Include="CompositTextWriter.cs" />
     <Compile Include="Commands\Timesheet\TimesheetCommand.cs" />
     <Compile Include="Configuration\AppConfiguration.cs" />
     <Compile Include="Extensions\ConfigurationExtensions.cs" />

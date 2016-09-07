@@ -16,13 +16,15 @@ namespace JiraCli.Commands.Timesheet
 
         public string[] Users { get; set; }
 
+        public string OutputFileName { get; set; }
+
         public void Run(JiraConfiguration settings, TextWriter output)
         {
             if (Period == null || Users == null)
                 throw new InvalidOperationException(
                     $"{nameof(Period)} and {nameof(Users)} must be initialized before running command.");
 
-            if(Users.Length ==0)
+            if (Users.Length == 0)
                 throw new InvalidOperationException($"{nameof(Users)} must contain at least one user.");
 
             output.WriteLine("Downloading worklogs for period of {0}.", Period);
@@ -33,12 +35,17 @@ namespace JiraCli.Commands.Timesheet
             var views = DownloadTimesheetAsync(jiraClient, Users, Period).Result;
 
             output.WriteLine();
-            //printing into output
-            foreach (var view in views)
+
+            using (var fileWriter = GetFileWriter(OutputFileName))
             {
-                output.WriteLine("Worklogs for user \"{0}\":", view.Author.Name);
-                view.Print(new PlainTextOutput(output));
-                output.WriteLine();
+                var compositOutput = new CompositTextWriter(fileWriter, output);
+                //printing into output
+                foreach (var view in views)
+                {
+                    compositOutput.WriteLine("Worklogs for user \"{0}\":", view.Author.Name);
+                    view.Print(new PlainTextOutput(compositOutput));
+                    compositOutput.WriteLine();
+                }
             }
         }
 
@@ -108,6 +115,15 @@ namespace JiraCli.Commands.Timesheet
             }
 
             return issuesRequestBuilder.Build();
+        }
+
+        private TextWriter GetFileWriter(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return TextWriter.Null;
+
+            FileStream stream = new FileStream(fileName, FileMode.Create);
+            return new StreamWriter(stream);
         }
     }
 }

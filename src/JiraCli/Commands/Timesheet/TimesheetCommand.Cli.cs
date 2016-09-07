@@ -47,6 +47,10 @@ namespace JiraCli.Commands.Timesheet
                         ? Period.FromDays(int.Parse(periodText))
                         : Period.FromString(periodText);
                 }
+                else if (Program.IsArg(args[argIndex], "f", "file"))
+                {
+                    OutputFileName = Program.GetOptionArgValue(args, ++argIndex);
+                }
                 else
                 {
                     Console.WriteLine($"Unknown option: {args[argIndex]}");
@@ -73,7 +77,8 @@ namespace JiraCli.Commands.Timesheet
 Options:
   -h|--help                  Show help 
   -u|--users <USERS>         Comma separated usernames (user1, user2, user3)
-  -p|--period <TIME_PERIOD>  Timesheet period for last days or specific time interval";
+  -p|--period <TIME_PERIOD>  Timesheet period for last days or specific time interval
+  -f|--file <FILE_NAME>      Output file name";
 
             Console.WriteLine(usageText);
         }
