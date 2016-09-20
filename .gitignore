@@ -29,3 +29,5 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 Packages/
 .vs/
+*.lock.json
+launchSettings.json

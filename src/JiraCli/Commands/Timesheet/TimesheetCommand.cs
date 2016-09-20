@@ -78,7 +78,7 @@ namespace JiraCli.Commands.Timesheet
             {
                 var issueViewModel = new IssueViewModel(issue);
                 issueViewModel.Worklogs = issue.worklogs
-                    .Where(w => authorViewModel.Name.Equals(w.authorName, StringComparison.InvariantCultureIgnoreCase))
+                    .Where(w => authorViewModel.Name.Equals(w.authorName, StringComparison.OrdinalIgnoreCase))
                     .Where(w => w.started.Date >= period.StartDate && w.started.Date <= period.EndDate)
                     .Select(w =>
                     {

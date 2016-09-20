@@ -22,11 +22,6 @@ namespace JiraCli
             }
         }
 
-        public override void Close()
-        {
-            Dispose(true);
-        }
-
         public override void Flush()
         {
             foreach (var textWriter in _textWriters)

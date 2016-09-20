@@ -28,7 +28,7 @@ namespace JiraCli
         public override string ToString()
         {
             return $"{(EndDate - StartDate).TotalDays.ToString("##")} days " +
-                   $"from {StartDate.ToShortDateString()} to {EndDate.ToShortDateString()}";
+                   $"from {StartDate.ToString("d")} to {EndDate.ToString("d")}";
         }
 
         public static Period FromDays(int days)
