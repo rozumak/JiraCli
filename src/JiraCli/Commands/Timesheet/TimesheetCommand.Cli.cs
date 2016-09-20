@@ -14,7 +14,6 @@ namespace JiraCli.Commands.Timesheet
 
             try
             {
-                //TODO: should not be hardcoded as console output only
                 command.Run(settings, Console.Out);
             }
             catch (Exception e)
