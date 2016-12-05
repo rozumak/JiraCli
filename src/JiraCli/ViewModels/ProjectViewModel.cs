@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Generic;
 using System.Linq;
-using JiraCli.Extensions;
 
 namespace JiraCli.ViewModels
 {
     public class ProjectViewModel
     {
-        private const int WorkDayHours = 8;
-        private const int WorkingDaysInWeek = 5;
-
         private readonly Period _period;
+        private readonly int _expectedWorkingHoursPerDay;
 
         public List<IssueViewModel> Issues { get; }
 
@@ -21,17 +16,13 @@ namespace JiraCli.ViewModels
 
         public double TotalHoursInPeriod => WorkingDays.Select(x => x.TotalHours).Sum();
 
-        public double ExpectedTotalHoursInPeriod
-            =>
-                WorkingDays.Count(
-                    d =>
-                        !d.Date.IsWeekendDay(WorkingDaysInWeek,
-                            CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek))*WorkDayHours;
+        public double ExpectedTotalHoursInPeriod => _period.WorkingDaysCount*_expectedWorkingHoursPerDay;
 
         public ProjectViewModel(IEnumerable<IssueViewModel> issues, IEnumerable<WorkDayViewModel> workingDays,
-            AuthorViewModel author, Period period)
+            AuthorViewModel author, Period period, int expectedWorkingHoursPerDay = 8)
         {
             _period = period;
+            _expectedWorkingHoursPerDay = expectedWorkingHoursPerDay;
             Issues = new List<IssueViewModel>(issues);
             WorkingDays = new List<WorkDayViewModel>(workingDays);
             Author = author;

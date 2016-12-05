@@ -1,13 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using JiraCli.Extensions;
 
 namespace JiraCli
 {
     public class Period
     {
+        private const int WorkingDaysInWeek = 5;
+
         public DateTime StartDate { get; }
         public DateTime EndDate { get; }
+
+        public int WorkingDaysCount
+        {
+            get
+            {
+                //TODO: official dayoffs are not supported
+                int count = 0;
+                foreach (var day in EnumerateDays())
+                {
+                    bool isWeekendDay = day.Date.IsWeekendDay(WorkingDaysInWeek,
+                        CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek);
+
+                    if (!isWeekendDay)
+                        count++;
+                }
+
+                return count;
+            }
+        }
 
         public Period(DateTime startDate, DateTime endDate)
         {
@@ -51,6 +73,7 @@ namespace JiraCli
                     if (DateTime.TryParseExact(items[1], dateFormat, CultureInfo.InvariantCulture,
                         DateTimeStyles.None, out endDate))
                     {
+                        endDate = endDate.AddDays(1).AddSeconds(-1);
                         return new Period(startDate, endDate);
                     }
                 }
