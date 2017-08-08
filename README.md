@@ -26,7 +26,7 @@ Host options (passed before the command):
   --pass              Site password
 
 Commands:
-  timesheet           Download timesheet report`
+  timesheet           Download timesheet report
 ```
 
 #### Examples
