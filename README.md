@@ -1,13 +1,13 @@
-###Jira command-line interface
+### Jira command-line interface
 [![Build status](https://ci.appveyor.com/api/projects/status/nfv0esrcjjbvdwd5?svg=true)](https://ci.appveyor.com/project/heXelium/jiracli)
 
-####Description
+#### Description
 The purpose of creating this tool is to have an easy way of making common tasks in Jira and getting different types of reports (which are mostly available via paid plugins and requires deep integration into the site) via command-line interface. The only thing that it currently supports it's getting detailed timesheet report for a period of time.
 
-####Configuration
+#### Configuration
 During the first run, JiraCli asks for username, password and Jira url. All values are stored in _appsettings.json_.
 
-####Usage
+#### Usage
 ```
 jira [host-options] [command] [arguments] [common-options]
 
@@ -29,7 +29,7 @@ Commands:
   timesheet           Download timesheet report`
 ```
 
-####Examples
+#### Examples
 
 Get timesheet command help:
 
